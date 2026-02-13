@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Railway가 PORT 환경변수 주입. 미설정 시 8000
+# Railway가 PORT 환경변수 주입. 반드시 0.0.0.0 바인딩 (헬스체크 도달용)
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+ENV PORT=8000
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT}"]
