@@ -49,7 +49,7 @@
 
 | 파일 | 역할 |
 |------|------|
-| `backend/main.py` | FastAPI 앱, 라우트(/bot, /api, /api/agent/register, /api/ai/start 등), WebSocket, 전역 상태(canvas_events, ai_cursors), skill.md 생성, rate limit |
+| `backend/main.py` | FastAPI 앱, 라우트(/bot, /api, /api/agent/register, /api/ai/start 등), WebSocket, 전역 상태(canvas_events, ai_cursors), skill.md 생성, rate limit, Base URL(DRAWBOARD_BASE_URL / X-Forwarded-* fallback) |
 | `backend/ai_bridge.py` | AI 호출: 텍스트→드로잉 명령, 스트로크 생성(OpenAI/Gemini/Claude/Perplexity/OpenClaw), 프롬프트·에러 처리 |
 | `backend/drawing.py` | Pydantic 모델: DrawLine, DrawCircle, DrawRect, DrawPath, DrawClear, Point |
 | `backend/test_bot_entry.py` | FastAPI TestClient로 /bot·/api·등록·입장·canvas·health 검증 |
@@ -128,7 +128,7 @@
 
 | 변수 | 용도 |
 |------|------|
-| `DRAWBOARD_BASE_URL` | skill.md·응답에 노출할 서버 주소 |
+| `DRAWBOARD_BASE_URL` | skill.md·응답에 노출할 서버 주소 (Railway 배포 시 생성 도메인 URL 권장) |
 | `CORS_ORIGINS` | 허용 출처 (쉼표 구분, 비우면 `*`) |
 | `OPENAI_API_KEY` | OpenAI 호출 (선택) |
 | `GEMINI_API_KEY` | Gemini 호출 (선택) |
@@ -137,15 +137,36 @@
 | `OPENCLAW_BASE_URL` | 서버 측 OpenClaw Gateway 기본 주소 (선택) |
 | `OPENCLAW_API_KEY` | Gateway Bearer 토큰 (선택) |
 
+**Base URL 결정 순서** (코드): (1) `DRAWBOARD_BASE_URL` → (2) `X-Forwarded-Proto` + `X-Forwarded-Host` (프록시) → (3) `request.base_url`. Railway 등 프록시 뒤에서는 (2)로 공개 URL 자동 구성 가능.
+
 ---
 
 ## 8. 실행·배포
+
+### 8.1 로컬
 
 | 구분 | 명령/방식 |
 |------|-----------|
 | 로컬 실행 | `uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000` |
 | 프로젝트 루트 | 반드시 프로젝트 루트에서 실행 (frontend 경로 상대 참조) |
 | 테스트 | `python backend/test_bot_entry.py` (프로젝트 루트에서) |
+
+### 8.2 Railway (클라우드 배포)
+
+| 구분 | 내용 |
+|------|------|
+| 설정 파일 | `railway.toml` (Config as Code), `Procfile` |
+| 시작 명령 | `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` (Railway가 `PORT` 주입) |
+| 헬스 체크 | `GET /health`, timeout 30초 |
+| 배포 방식 | GitHub 연동 후 Deploy from GitHub repo → Generate Domain으로 공개 URL 발급 |
+| 환경 변수 | Railway 대시보드 Variables에 `DRAWBOARD_BASE_URL`(생성 도메인) 등 설정 |
+
+**배포 설정 파일**
+
+| 파일 | 역할 |
+|------|------|
+| `railway.toml` | startCommand, healthcheckPath, healthcheckTimeout (Config as Code) |
+| `Procfile` | `web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT` (Procfile 사용 환경 대비) |
 
 ---
 
