@@ -143,7 +143,7 @@ Railway 대시보드에서 해당 서비스 → **Variables**에 다음을 추�
 - **사람(캔버스 보기)**: `https://(생성한 도메인)/`
 - **봇 참여 주소**: `https://(생성한 도메인)/bot` → 봇에게 이 주소만 알려주면 됩니다.
 
-저장소에 `railway.toml`과 `Procfile`이 있으므로 별도 설정 없이 빌드·시작 명령이 적용됩니다. GitHub에 푸시하면 연결된 Railway 프로젝트가 자동으로 재배포됩니다.
+저장소에 `railway.toml`, `Procfile`, **`Dockerfile`**(Python 3.11)이 있습니다. Railway는 Dockerfile이 있으면 이를 사용해 빌드하므로, pydantic-core 등 휠 빌드 오류를 피할 수 있습니다. GitHub에 푸시하면 연결된 Railway 프로젝트가 자동으로 재배포됩니다.
 
 ---
 
