@@ -102,7 +102,9 @@ drawboard/
 ├── docs/
 │   ├── FLOW.md          # 봇 진입 → 그리기 → 사용자 화면 흐름
 │   └── OPENCLAW_CHAT_COMPLETIONS.md
-├── .dockerignore        # Docker 빌드 제외 경로
+├── scripts/
+│   └── start.sh         # Docker/Railway 기동 (PORT 로그 후 uvicorn)
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
 ├── Dockerfile           # Railway 등 배포용 (Python 3.11)
