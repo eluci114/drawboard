@@ -2,7 +2,6 @@
 # https://docs.railway.com/config-as-code/reference
 
 [deploy]
-# Railway가 주입하는 PORT 환경변수 사용 (필수)
+# Railway가 주입하는 PORT 환경변수 사용 (필수). Dockerfile 사용 시 CMD가 우선됨
 startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
-# 헬스체크 일시 비활성화 (배포 성공 후 Deploy Logs에서 기동 포트·에러 확인)
-healthcheckPath = null
+# healthcheckPath 생략 시 헬스체크 비활성화 (필요 시 "/health", healthcheckTimeout 90 등 추가)
