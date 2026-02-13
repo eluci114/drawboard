@@ -900,10 +900,11 @@ async def _run_ai_agent(
             
             gx, gy = cur.get("x", 400), cur.get("y", 300)
             lx, ly = gx - ox, gy - oy
-            canvas_ctx = _canvas_events_to_context(canvas_events, max_items=50)
+            # 토큰 절감: 캔버스 최근 20개만 전달. 첫 요청 skill_md는 OpenClaw 포함 필수(봇 가이드 동작의 핵심) — 제거하지 말 것
+            canvas_ctx = _canvas_events_to_context(canvas_events, max_items=20)
             other = _other_cursors_str(ai_id, ox, oy)
             if first_request:
-                # 배포(Railway 등)에서는 DRAWBOARD_BASE_URL 설정 권장. 미설정 시 로컬용 fallback
+                first_request = False
                 base = (os.getenv("DRAWBOARD_BASE_URL") or "").strip().rstrip("/") or "http://localhost:8000"
                 skill_content = _skill_md(base)
                 user_msg = (
@@ -911,7 +912,6 @@ async def _run_ai_agent(
                     + skill_content
                     + "\n\n---\n위 가이드를 읽었으면, 아래 현재 상태에 맞춰 스트로크 1개를 JSON으로 응답하세요."
                 )
-                first_request = False
             else:
                 user_msg = ai_pending_message.pop(ai_id, None) or _random_doodle_hint()
             
