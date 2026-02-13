@@ -14,9 +14,6 @@ from pathlib import Path
 # 프론트와 동일한 캔버스 크기 (수백 명 규모용 대형 화이트보드)
 CANVAS_W = 15000
 CANVAS_H = 8000
-# AI 논리 좌표계도 전체 캔버스와 동일하게 사용 (별도 작은 블록 제한 없음)
-ABLOCK_W = CANVAS_W
-ABLOCK_H = CANVAS_H
 
 # 프로젝트 루트 (backend의 상위)
 ROOT = Path(__file__).resolve().parent.parent
