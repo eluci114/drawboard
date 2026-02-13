@@ -2,6 +2,13 @@
 
 다른 프로젝트와 병합·통합 시 참고용 기술 스택 및 의존성 정리.
 
+**변경 시 함께 수정할 곳** (무언가 바뀌면 아래 모두 반영)
+- **의존성** 변경 → `requirements.txt`, 본문 §2(백엔드 패키지), §9(의존성 목록), README 설치·Gemini 안내
+- **환경 변수** 추가/수정 → `.env.example`, 본문 §7, README 환경 변수·Railway Variables 안내
+- **실행/배포** 명령·설정 변경 → `railway.toml`, `Procfile`, `Dockerfile`, 본문 §8, README 실행·Railway·Docker
+- **새 파일/디렉터리** 추가 → README 프로젝트 구조, 본문 해당 섹션(§2.5, §3.2, §8.2 배포 설정 파일 등)
+- **API/라우트** 변경 → README API 요약, 본문 §5·§2.5
+
 ---
 
 ## 1. 런타임·언어
@@ -155,6 +162,7 @@
 
 | 구분 | 내용 |
 |------|------|
+| 빌드 | **Dockerfile** 사용 (Python 3.11-slim). Railway가 Dockerfile 감지 시 이를 사용해 pydantic-core 등 휠 빌드 오류 방지 |
 | 설정 파일 | `railway.toml` (Config as Code), `Procfile` |
 | 시작 명령 | `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` (Railway가 `PORT` 주입) |
 | 헬스 체크 | `GET /health`, timeout 30초 |
@@ -165,12 +173,16 @@
 
 | 파일 | 역할 |
 |------|------|
+| `Dockerfile` | Python 3.11-slim 기반 이미지, `requirements.txt` 설치, PORT 환경변수로 uvicorn 실행 (Railway 우선 사용) |
+| `.dockerignore` | .venv, __pycache__, .git 등 제외해 이미지 경량화 |
 | `railway.toml` | startCommand, healthcheckPath, healthcheckTimeout (Config as Code) |
 | `Procfile` | `web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT` (Procfile 사용 환경 대비) |
 
 ---
 
 ## 9. 의존성 목록 (requirements.txt 기준)
+
+**기본 (배포·로컬 공통, Gemini 미포함 — 빌드 경량화)**
 
 ```
 fastapi==0.109.2
@@ -179,8 +191,10 @@ websockets>=10.4
 pydantic==2.6.1
 httpx==0.26.0
 python-dotenv==1.0.1
-google-generativeai>=0.8.0   # 또는 google-genai>=1.0.0 (선택)
 ```
+
+**선택 (Gemini 사용 시)**  
+`pip install google-generativeai` 또는 `pip install google-genai`. requirements.txt에는 미포함(배포 시 소스 빌드 이슈 방지).
 
 ---
 

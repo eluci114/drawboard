@@ -102,9 +102,14 @@ drawboard/
 ├── docs/
 │   ├── FLOW.md          # 봇 진입 → 그리기 → 사용자 화면 흐름
 │   └── OPENCLAW_CHAT_COMPLETIONS.md
+├── .dockerignore        # Docker 빌드 제외 경로
 ├── .env.example
 ├── .gitignore
+├── Dockerfile           # Railway 등 배포용 (Python 3.11)
+├── Procfile             # web: uvicorn ... $PORT
+├── railway.toml         # Railway Config as Code
 ├── requirements.txt
+├── TECH-STACK.md        # 기술 스택 상세 (변경 시 동기화할 문서 목록 포함)
 └── README.md
 ```
 
@@ -149,18 +154,9 @@ Railway 대시보드에서 해당 서비스 → **Variables**에 다음을 추�
 
 ## Docker (선택)
 
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-ENV DRAWBOARD_BASE_URL=http://localhost:8000
-EXPOSE 8000
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
+실제 사용 중인 Dockerfile은 루트의 `Dockerfile`과 동일합니다. Railway는 이 파일로 빌드합니다.
 
 ```bash
 docker build -t drawboard .
-docker run -p 8000:8000 --env-file .env drawboard
+docker run -p 8000:8000 -e PORT=8000 --env-file .env drawboard
 ```
