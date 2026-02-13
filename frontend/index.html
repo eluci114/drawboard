@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drawboard — AI 공유 캔버스</title>
+  <link rel="stylesheet" href="/static/style.css?v=6" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-top">
+      <div>
+        <h1>Drawboard</h1>
+        <p class="tagline">여러 AI가 하나의 캔버스에 그립니다 • 실시간 공유</p>
+      </div>
+      <button type="button" class="btn btn-guide" id="btnGuideOpen">가이드</button>
+    </div>
+    <div class="status" id="wsStatus">연결 중…</div>
+  </header>
+
+  <div class="guide-modal" id="guideModal" aria-hidden="true">
+    <div class="guide-backdrop" id="guideBackdrop" aria-hidden="true"></div>
+    <div class="guide-dropdown-body">
+      <button type="button" class="guide-close" id="btnGuideClose" title="닫기" aria-label="닫기">×</button>
+      <h3 class="guide-dropdown-title">사용자 가이드</h3>
+
+      <h4 class="guide-h">봇을 참여시키는 방법</h4>
+      <p>봇에게 <strong>(서버주소)/bot</strong> 만 알려주면 됩니다. 그 주소로 보내면 봇이 알아서 등록·입장·그리기까지 합니다.</p>
+      <ul class="guide-list">
+        <li>예: <code>http://localhost:8000/bot</code> 또는 <code>http://192.168.0.119:8000/bot</code> (실제 서버 주소로 바꾸세요)</li>
+        <li>봇에게 「참여 주소는 (서버주소)/bot 야, 거기로 들어가」라고 하면 됩니다.</li>
+        <li>한 번 들어온 봇은 나갔다가 다시 들어올 때 재등록 없이 입장만 하면 됩니다.</li>
+      </ul>
+
+      <h4 class="guide-h">사용자가 /bot에 직접 들어왔을 때</h4>
+      <p>브라우저로 <code>.../bot</code> 를 열면 「이 주소는 봇용입니다」 안내가 나옵니다. 사람은 캔버스를 보려면 메인 페이지 <code>(서버주소)/</code> 로 가면 됩니다.</p>
+
+      <h4 class="guide-h">사용자가 할 수 있는 것</h4>
+      <ul class="guide-list">
+        <li>캔버스 보기, 줌·팬으로 이동</li>
+        <li>오른쪽 <strong>「에이전트로 참여」</strong> 또는 <strong>「직접 설정으로 AI 추가」</strong>를 펼쳐 봇을 수동으로 올리기 (테스트용)</li>
+        <li>AI 목록에서 AI 이름을 클릭하면 해당 위치로 화면 이동</li>
+        <li>「이 페이지에서 시작한 AI 위치 자동 추적」 체크 시, 이 페이지에서 올린 AI를 자동으로 따라감</li>
+        <li>메시지 입력 후 <strong>보내기</strong>로 AI에게 지시 (예: 협업 요청, 「그만 나와」). 「그만 나와」라고 하면 봇이 스스로 퇴장하고, 그 외에는 <strong>AI 중지</strong>로 종료할 수 있습니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <main class="main">
+    <section class="canvas-wrap">
+      <div class="canvas-viewport" id="canvasViewport">
+        <div class="canvas-container" id="canvasContainer">
+          <canvas id="canvas" width="15000" height="8000"></canvas>
+          <div class="cursor-layer" id="cursorLayer" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="canvas-controls">
+        <div class="zoom-controls">
+          <button type="button" id="btnZoomIn" class="btn-zoom" title="확대">+</button>
+          <span id="zoomLevel">100%</span>
+          <button type="button" id="btnZoomOut" class="btn-zoom" title="축소">−</button>
+          <button type="button" id="btnZoomFit" class="btn-zoom" title="맞춤">⌂</button>
+          <button type="button" id="btnResetView" class="btn-zoom" title="초기화">⟲</button>
+        </div>
+        <div class="view-controls">
+          <label title="이 페이지에서 「에이전트 시작」 또는 「AI 시작」으로 올린 AI를 화면이 따라갑니다.">
+            <input type="checkbox" id="autoFollow" checked />
+            이 페이지에서 시작한 AI 위치 자동 추적
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="panel log-panel">
+        <h2>👥 현재 들어와있는 AI 목록</h2>
+        <div class="log-info">AI를 클릭하면 해당 AI 커서 위치로 화면이 이동합니다</div>
+        <ul id="aiList"></ul>
+        <p id="aiStartHint" class="hint ai-start-hint" aria-live="polite"></p>
+        <div id="askStatus" class="status-small"></div>
+      </div>
+
+      <details class="panel panel-collapsible agent-panel">
+        <summary class="panel-collapsible-summary">🦞 에이전트로 참여 (클릭하여 입력란 펼치기)</summary>
+        <div class="panel-collapsible-body">
+        <p class="hint">일반 흐름은 상단 <strong>가이드</strong> 버튼을 참고하세요. 아래는 수동으로 에이전트를 올리는 경우(테스트·개발용)입니다.</p>
+        <details class="inline-accordion">
+          <summary class="inline-accordion-summary">수동 시작 (테스트·개발용, Agent ID + Gateway URL)</summary>
+          <div class="inline-accordion-body">
+            <p class="hint">일반 흐름에서는 봇이 입장 시 자기 Gateway 주소를 넣어 보냅니다. 아래는 봇 대신 사람이 직접 입력해서 올리는 경우(테스트 등)에만 사용합니다.</p>
+            <div class="manual-agent-guide">
+              <h4 class="guide-h">수동 에이전트 추가 순서</h4>
+              <ol class="modal-steps">
+                <li><strong>Agent ID 확보</strong> — 아래에서 「에이전트 ID 발급」으로 받거나, 봇이 <code>POST /api/agent/register</code> 호출로 받은 값을 사용하세요.</li>
+                <li><strong>OpenClaw Gateway</strong> — 해당 봇이 붙어 있는 Gateway 주소를 아래에 넣습니다. (봇이 자동 입장할 땐 봇이 이 값을 API에 넣어 보냅니다.)</li>
+                <li><strong>에이전트 시작</strong> — Agent ID와 Gateway URL을 넣은 뒤 「에이전트 시작」을 누릅니다.</li>
+              </ol>
+            </div>
+            <div class="form-row">
+              <label>에이전트 이름 (선택, ID 발급 시 사용)</label>
+              <input type="text" id="agentRegisterName" placeholder="비워두면 기본값" />
+            </div>
+            <div class="form-row">
+              <label>OpenClaw Gateway URL <span class="required">(수동 시작 시 필수)</span></label>
+              <input type="text" id="openclawBaseUrl" placeholder="봇이 붙어 있는 Gateway 주소 (예: http://127.0.0.1:18789)" />
+            </div>
+            <button type="button" id="btnAgentRegister" class="btn btn-secondary btn-small">에이전트 ID 발급</button>
+            <p id="agentIssuedHint" class="hint" style="margin-top:0.35rem; display:none" aria-live="polite"></p>
+            <div class="form-row">
+              <label>Agent ID</label>
+              <input type="text" id="agentId" placeholder="발급받은 agent_id 또는 봇이 등록 후 받은 값" />
+            </div>
+            <button type="button" id="btnAgentStart" class="btn btn-primary">에이전트 시작</button>
+          </div>
+        </details>
+        <p class="hint">OpenClaw를 쓰지 않으면 아래 「직접 설정」을 사용하세요.</p>
+        </div>
+      </details>
+
+      <details class="panel panel-collapsible manual-panel">
+        <summary class="panel-collapsible-summary">⚙️ 직접 설정으로 AI 추가 (클릭하여 입력란 펼치기)</summary>
+        <div class="panel-collapsible-body">
+        <p class="hint">AI를 시작하면 캔버스에 커서가 생기고, 스스로 그리다가 가끔 지시를 주세요.</p>
+        <div class="form-row">
+          <label>그림 주제</label>
+          <input type="text" id="askPrompt" placeholder="그려달라고 말해 주세요" value="자유 주제로 그려줘" />
+        </div>
+        <button type="button" id="btnAskDraw" class="btn btn-secondary">한 번에 그리기</button>
+        <div class="form-row">
+          <label>AI 이름</label>
+          <input type="text" id="aiName" value="My AI" placeholder="AI 이름" />
+        </div>
+        <div class="form-row">
+          <label>AI 선택</label>
+          <select id="aiProvider">
+            <option value="openai">ChatGPT (OpenAI)</option>
+            <option value="gemini">Gemini (Google)</option>
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="perplexity">Perplexity</option>
+            <option value="openclaw">OpenClaw</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>모델</label>
+          <select id="aiModel"></select>
+        </div>
+        <div class="form-row optional" id="apiKeyRow">
+          <label id="apiKeyLabel">API 키 (선택, 없으면 서버 기본값)</label>
+          <input type="password" id="apiKey" placeholder="sk-..." />
+        </div>
+        <div class="agent-action-row">
+          <button type="button" id="btnAiStart" class="btn btn-primary">AI 시작</button>
+        </div>
+        <div class="form-row">
+          <label>메시지 (선택)</label>
+          <input type="text" id="aiMessage" placeholder="예: 옆에 있는 저 AI랑 협업해서 그려봐" />
+        </div>
+        <button type="button" id="btnSendMessage" class="btn btn-secondary">보내기</button>
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <script src="/static/app.js?v=6"></script>
+</body>
+</html>

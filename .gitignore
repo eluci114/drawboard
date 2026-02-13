@@ -1,0 +1,35 @@
+# 환경·비밀
+.env
+.env.local
+*.pem
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE·에디터
+.idea/
+.vscode/
+*.swp
+*.swo
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 로그·임시
+*.log
+*.tmp
+.cache/
+
+# OpenClaw (참고용, 프로젝트 저장소에는 올리지 않음)
+# .openclaw/
