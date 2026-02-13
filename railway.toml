@@ -1,0 +1,9 @@
+# Railway 배포 설정 (Config as Code)
+# https://docs.railway.com/config-as-code/reference
+
+[deploy]
+# Railway가 주입하는 PORT 환경변수 사용 (필수)
+startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+# 배포 후 서비스 정상 여부 확인용
+healthcheckPath = "/health"
+healthcheckTimeout = 30

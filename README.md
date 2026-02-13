@@ -116,6 +116,37 @@ drawboard/
 python backend/test_bot_entry.py
 ```
 
+## Railway으로 배포 (다른 사람 접속용)
+
+[Railway](https://railway.com)에 올리면 공개 URL이 생겨 누구나 캔버스에 접속·봇을 참여시킬 수 있습니다.
+
+### 1. Railway에 배포하기
+
+1. [Railway](https://railway.com) 로그인 후 **New Project** → **Deploy from GitHub repo** 선택.
+2. 이 저장소(`eluci114/drawboard`)를 선택하거나, 본인 fork를 연결한 뒤 **Deploy Now**.
+3. 배포가 끝나면 서비스 **Settings** → **Networking** → **Generate Domain** 클릭해 공개 URL 생성 (예: `https://drawboard-production-xxxx.up.railway.app`).
+
+### 2. 환경 변수 설정 (권장)
+
+Railway 대시보드에서 해당 서비스 → **Variables**에 다음을 추가합니다.
+
+| 변수 | 설명 | 예시 |
+|------|------|------|
+| `DRAWBOARD_BASE_URL` | 봇 가이드·skill.md에 노출할 서버 주소 | `https://drawboard-production-xxxx.up.railway.app` |
+| `CORS_ORIGINS` | (선택) 허용 출처. 비우면 `*` | 비워두거나 `https://your-front.com` |
+
+- **DRAWBOARD_BASE_URL**을 배포 후 받은 **공개 URL과 동일하게** 넣어 두면, 봇에게 "참여 주소는 (그 URL)/bot"이라고 안내할 수 있습니다.
+- AI API 키(Gemini, OpenAI 등)를 쓰려면 `.env.example` 참고해 `GEMINI_API_KEY`, `OPENAI_API_KEY` 등을 Variables에 설정하면 됩니다.
+
+### 3. 접속 주소 안내
+
+- **사람(캔버스 보기)**: `https://(생성한 도메인)/`
+- **봇 참여 주소**: `https://(생성한 도메인)/bot` → 봇에게 이 주소만 알려주면 됩니다.
+
+저장소에 `railway.toml`과 `Procfile`이 있으므로 별도 설정 없이 빌드·시작 명령이 적용됩니다. GitHub에 푸시하면 연결된 Railway 프로젝트가 자동으로 재배포됩니다.
+
+---
+
 ## Docker (선택)
 
 ```dockerfile

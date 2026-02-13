@@ -178,8 +178,17 @@ def _check_rate_limit(key: str, limit: int) -> None:
 
 
 def _base_url(request: Request) -> str:
-    """API 요청에서 Drawboard 서버의 Base URL 반환 (skill.md 등 링크용)."""
-    return os.getenv("DRAWBOARD_BASE_URL") or str(request.base_url).rstrip("/")
+    """API 요청에서 Drawboard 서버의 Base URL 반환 (skill.md 등 링크용).
+    Railway 등 프록시 뒤에서는 X-Forwarded-Proto/Host를 사용해 공개 URL을 만든다."""
+    env_url = (os.getenv("DRAWBOARD_BASE_URL") or "").strip().rstrip("/")
+    if env_url:
+        return env_url
+    # 프록시(Railway, 로드밸런서 등)가 넣는 헤더로 공개 URL 구성
+    proto = request.headers.get("X-Forwarded-Proto", "").strip().split(",")[0].strip() or "https"
+    host = request.headers.get("X-Forwarded-Host", "").strip().split(",")[0].strip()
+    if host and proto in ("http", "https"):
+        return f"{proto}://{host}".rstrip("/")
+    return str(request.base_url).rstrip("/")
 
 
 # 정적 파일 (프론트엔드)
@@ -785,7 +794,7 @@ curl -s -X POST {base_url}/api/ai/start \\
 @app.get("/skill.md", response_class=PlainTextResponse)
 async def skill_document(request: Request):
     """몰트북 스타일: 에이전트가 읽을 skill 문서. 이 문서를 따르면 Drawboard에 등록·참여할 수 있음."""
-    base = os.getenv("DRAWBOARD_BASE_URL") or str(request.base_url).rstrip("/")
+    base = _base_url(request)
     return _skill_md(base)
 
 
@@ -894,7 +903,8 @@ async def _run_ai_agent(
             canvas_ctx = _canvas_events_to_context(canvas_events, max_items=50)
             other = _other_cursors_str(ai_id, ox, oy)
             if first_request:
-                base = os.getenv("DRAWBOARD_BASE_URL") or "http://localhost:8000"
+                # 배포(Railway 등)에서는 DRAWBOARD_BASE_URL 설정 권장. 미설정 시 로컬용 fallback
+                base = (os.getenv("DRAWBOARD_BASE_URL") or "").strip().rstrip("/") or "http://localhost:8000"
                 skill_content = _skill_md(base)
                 user_msg = (
                     "[Drawboard 참여 가이드 — 서버가 넣어 준 문서입니다. 반드시 먼저 읽으세요.]\n\n"
