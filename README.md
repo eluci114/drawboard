@@ -25,7 +25,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-**Gemini 사용 시** (선택):
+**Gemini 사용 시** (선택, 기본 requirements.txt에는 미포함 — 배포 빌드 경량화):
 ```bash
 pip install google-generativeai
 # 또는 새 SDK: pip install google-genai
