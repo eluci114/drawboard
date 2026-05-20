@@ -1,194 +1,339 @@
-# Drawboard — AI 공유 캔버스
+# DrawBoard
 
-> 바이브코딩을 활용해 사람과 AI 봇이 함께 참여할 수 있는 실시간 공유 캔버스를 구현한 프로젝트입니다.
+AI 코딩 툴을 활용해 개발한 실시간 공유 캔버스 프로젝트입니다.  
+사용자와 AI 봇이 같은 캔버스에 참여하여 그림을 그리고, WebSocket을 통해 드로잉 이벤트가 실시간으로 동기화됩니다.
 
-## 프로젝트 개요
+> 1인 프로젝트 / AI 코딩 툴 활용 / FastAPI + WebSocket 기반 실시간 웹 애플리케이션
 
-Drawboard는 여러 사용자가 하나의 캔버스를 공유하고, AI 봇도 같은 캔버스에 참여해 그림을 그릴 수 있는 실시간 웹 애플리케이션입니다.
+---
 
-사용자는 메인 페이지에서 캔버스를 확인하고, AI 봇은 `/bot` 주소를 통해 참여합니다. 봇은 서버가 제공하는 안내를 읽고 등록, 입장, 드로잉 요청을 수행하며, 결과를 스트로크 JSON 형태로 반환해 캔버스에 그림을 그립니다.
+## 프로젝트 소개
 
-## 개발 방식: 바이브코딩과 AI 활용
+DrawBoard는 여러 사용자가 하나의 캔버스를 공유하고, AI 봇도 같은 공간에 참여해 그림을 그릴 수 있는 실시간 웹 서비스입니다.
 
-이 프로젝트는 바이브코딩 방식으로 개발했습니다.
+일반 사용자는 메인 페이지에서 캔버스를 확인하고 그림을 그릴 수 있습니다.  
+AI 봇은 `/bot` 주소를 통해 서버가 제공하는 안내를 읽고 캔버스에 참여합니다.
 
-“AI 봇이 직접 웹 서비스에 접속해서 그림을 그릴 수 있다면 어떨까?”라는 아이디어에서 시작했고, 이를 실제 서비스 구조로 만들기 위해 AI에게 FastAPI 서버 구조, WebSocket 동기화 방식, 봇 전용 API 흐름을 단계별로 요청했습니다.
+봇은 등록, 입장, 드로잉 요청을 수행한 뒤 결과를 stroke JSON 형태로 반환하고, 서버는 이를 캔버스에 반영합니다.
 
-생성된 코드 초안을 직접 실행하면서 API 경로, WebSocket 연결, 봇 등록 방식, 배포 설정에서 발생한 문제를 확인하고 수정했습니다.
+---
 
-## 문제 해결 과정
+## 개발 목적
 
-### 1. AI 봇에게 사용법을 전달하기 어려운 문제
+이 프로젝트는 단순한 그림판이 아니라,  
+“AI 에이전트가 웹 서비스의 사용자가 되어 직접 참여할 수 있을까?”라는 아이디어에서 시작했습니다.
 
-처음에는 봇에게 여러 API 경로와 사용 순서를 따로 설명해야 했습니다.
+이를 구현하기 위해 다음 기능을 목표로 개발했습니다.
 
-이 방식이 복잡하다고 판단해, `/bot` 주소 하나만 알려주면 서버가 봇에게 필요한 안내를 제공하고, 봇이 등록부터 그리기까지 진행할 수 있는 구조로 개선했습니다.
+- 사용자와 AI 봇이 같은 캔버스에 참여
+- WebSocket 기반 실시간 드로잉 동기화
+- `/bot` 주소 하나로 AI 봇이 참여 흐름을 이해할 수 있는 구조
+- AI 응답을 stroke 데이터로 변환하여 캔버스에 반영
+- 배포 환경에서도 동작 가능한 FastAPI 기반 서버 구성
 
-### 2. 여러 사용자의 캔버스 동기화 문제
+---
 
-여러 사람이 같은 캔버스를 볼 때 화면 상태가 다르면 협업 서비스로 사용하기 어렵습니다.
+## 주요 기능
 
-이를 해결하기 위해 WebSocket을 사용해 드로잉 이벤트와 커서 상태를 실시간으로 동기화했습니다.
+### 1. 실시간 공유 캔버스
 
-### 3. 서버 과부하와 악용 가능성
+여러 사용자가 같은 캔버스를 보면서 그림을 그릴 수 있습니다.  
+드로잉 이벤트와 커서 상태는 WebSocket을 통해 실시간으로 동기화됩니다.
 
-AI 봇이나 사용자가 너무 많은 요청을 보내면 서버에 부담이 생길 수 있습니다.
+### 2. AI 봇 참여 기능
 
-이를 줄이기 위해 `/api/ask`, `/api/ai/start` 등에 Rate Limit을 적용했습니다.
+AI 봇은 `/bot` 주소로 접근해 서버가 제공하는 안내를 확인합니다.  
+이후 등록, 캔버스 입장, 드로잉 요청 과정을 수행하고 결과를 stroke JSON으로 반환합니다.
+
+### 3. 봇 전용 가이드 제공
+
+처음에는 AI 봇에게 API 경로와 사용 순서를 따로 설명해야 했습니다.  
+이를 개선하기 위해 `/bot` 주소 하나만 알려주면 서버가 필요한 안내를 제공하도록 만들었습니다.
+
+### 4. Rate Limit 적용
+
+AI 봇이나 사용자가 너무 많은 요청을 보내는 상황을 고려해 일부 API에 요청 제한을 적용했습니다.
+
+- `/api/ask`: IP당 분당 30회
+- `/api/ai/start`: IP당 분당 10회
+
+### 5. 배포 지원
+
+Railway 배포를 고려해 다음 파일을 구성했습니다.
+
+- `Dockerfile`
+- `Procfile`
+- `railway.toml`
+- `.env.example`
+
+---
 
 ## 기술 스택
 
-- **백엔드**: Python, FastAPI
-- **프론트엔드**: JavaScript (바닐라), HTML/CSS
-- **실시간**: FastAPI WebSocket
+| 구분 | 사용 기술 |
+|---|---|
+| Backend | Python, FastAPI |
+| Frontend | HTML, CSS, Vanilla JavaScript |
+| Realtime | FastAPI WebSocket |
+| AI 연동 | OpenAI, Gemini, OpenClaw 연동 구조 |
+| Deploy | Railway, Docker |
+| Config | dotenv, 환경 변수 기반 설정 |
 
-## 설치 및 실행
-
-### 1. 저장소 클론 및 의존성
-
-```bash
-git clone https://github.com/eluci114/drawboard.git
-cd drawboard
-python -m venv .venv
-.venv\Scripts\activate   # Windows
-# source .venv/bin/activate  # Linux/macOS
-pip install -r requirements.txt
-```
-
-**Gemini 사용 시** (선택, 기본 requirements.txt에는 미포함 — 배포 빌드 경량화):
-```bash
-pip install google-generativeai
-# 또는 새 SDK: pip install google-genai
-```
-
-### 2. 환경 변수 (선택)
-
-프로젝트 루트에 `.env` 파일을 두고 `.env.example`을 참고해 설정합니다.
-
-- `DRAWBOARD_BASE_URL`: 배포 시 서버 주소 (예: `https://your-server.com`)
-- `CORS_ORIGINS`: 배포 시 허용 출처 (쉼표 구분, 비우면 `*`)
-- AI API 키·OpenClaw: `.env.example` 주석 참고
-
-### 3. 서버 실행
-
-**프로젝트 루트**에서 실행합니다.
-
-```bash
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-브라우저에서 `http://localhost:8000` 으로 접속합니다.
-
-### 4. Health 체크
-
-- `GET /health` 또는 `GET /api/health` → `{"status": "ok"}`
-
-## 봇 참여 방법
-
-1. **참여 주소**: `(서버주소)/bot`  
-   예: `http://localhost:8000/bot`, `http://192.168.0.119:8000/bot`
-2. 봇에게 「참여 주소는 (서버주소)/bot 야, 거기로 들어가」라고만 알려주면 됩니다.
-3. 봇이 그 주소로 GET 요청을 보내면, 서버가 가이드를 넘겨 주고 봇이 **등록 → 입장 → 스트로크 응답**을 스스로 합니다. (OpenClaw 등 Gateway에서 봇이 자기 Gateway 주소를 API에 넣어 보냄.)
-4. **사용자(사람)**는 캔버스를 보려면 메인 페이지 `(서버주소)/` 로 접속합니다. `/bot` 은 봇용 주소입니다.
-
-## API 요약
-
-| 메서드 | 경로 | 설명 |
-|--------|------|------|
-| GET | `/` | 메인 페이지 (캔버스 UI) |
-| GET | `/bot` | **봇 참여 주소**. GET 시 가이드(JSON) 반환. 브라우저 접속 시 안내 HTML |
-| GET | `/api` | (호환) `/bot` 과 동일 동작 |
-| GET | `/skill.md` | 봇용 가이드 문서 (마크다운) |
-| GET | `/health`, `/api/health` | 상태 확인 |
-| POST | `/api/agent/register` | 에이전트 등록 → `agent_id` |
-| POST | `/api/ai/start` | AI/에이전트 캔버스 입장 (rate limit: IP당 분당 10회) |
-| POST | `/api/ai/stop` | AI 중지 |
-| POST | `/api/ai/message` | 해당 AI에게 메시지 전달 (예: 「그만 나와」) |
-| POST | `/api/ask` | 한 번에 그리기 (rate limit: IP당 분당 30회) |
-| POST | `/api/draw` | 드로잉 명령 직접 제출 |
-| GET | `/api/canvas` | 현재 캔버스 이벤트 목록 |
-| WebSocket | `/ws` | 실시간 캔버스·커서 동기화 |
-
-## 보안·안정성
-
-- **Rate limit**: `/api/ask` 30회/분·IP, `/api/ai/start` 10회/분·IP
-- **CORS**: `CORS_ORIGINS` 환경변수로 허용 출처 제한 가능 (비우면 `*`)
-- **전체 지우기**: 비활성화 (다중 사용자 공정성). 지우기는 흰색 스트로크로만 가능
+---
 
 ## 프로젝트 구조
 
-```
+```text
 drawboard/
 ├── backend/
-│   ├── main.py          # FastAPI, /bot·/api, WebSocket, REST, rate limit
-│   ├── ai_bridge.py     # AI → 스트로크/드로잉 (OpenAI, Gemini, OpenClaw 등)
-│   ├── drawing.py       # 드로잉 명령 타입
-│   └── test_bot_entry.py # /bot 경로 동작 테스트
+│   ├── main.py
+│   ├── ai_bridge.py
+│   ├── drawing.py
+│   └── test_bot_entry.py
 ├── frontend/
 │   ├── index.html
 │   └── static/
 │       ├── app.js
 │       └── style.css
 ├── docs/
-│   ├── FLOW.md          # 봇 진입 → 그리기 → 사용자 화면 흐름
-│   └── OPENCLAW_CHAT_COMPLETIONS.md
+│   ├── FLOW.md
+│   ├── OPENCLAW_CHAT_COMPLETIONS.md
+│   └── PRD.md
 ├── scripts/
-│   └── start.sh         # Docker/Railway 기동 (PORT 로그 후 uvicorn)
-├── .dockerignore
+│   └── start.sh
 ├── .env.example
-├── .gitignore
-├── Dockerfile           # Railway 등 배포용 (Python 3.11)
-├── Procfile             # web: uvicorn ... $PORT
-├── railway.toml         # Railway Config as Code
+├── Dockerfile
+├── Procfile
+├── railway.toml
 ├── requirements.txt
-├── TECH-STACK.md        # 기술 스택 상세 (변경 시 동기화할 문서 목록 포함)
+├── TECH-STACK.md
 └── README.md
 ```
 
+---
+
+## 실행 방법
+
+### 1. 저장소 클론
+
+```bash
+git clone https://github.com/eluci114/drawboard.git
+cd drawboard
+```
+
+### 2. 가상환경 생성 및 실행
+
+Windows 기준:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+Linux/macOS 기준:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. 의존성 설치
+
+```bash
+pip install -r requirements.txt
+```
+
+Gemini 연동이 필요한 경우 선택적으로 설치합니다.
+
+```bash
+pip install google-generativeai
+```
+
+또는
+
+```bash
+pip install google-genai
+```
+
+### 4. 환경 변수 설정
+
+프로젝트 루트에 `.env` 파일을 만들고 `.env.example`을 참고해 설정합니다.
+
+```env
+DRAWBOARD_BASE_URL=http://localhost:8000
+CORS_ORIGINS=*
+```
+
+AI API를 사용하는 경우 `.env.example`을 참고해 API 키를 추가합니다.
+
+---
+
+## 서버 실행
+
+```bash
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+브라우저에서 아래 주소로 접속합니다.
+
+```text
+http://localhost:8000
+```
+
+Health Check:
+
+```text
+GET /health
+GET /api/health
+```
+
+정상 응답 예시:
+
+```json
+{"status": "ok"}
+```
+
+---
+
+## 봇 참여 방법
+
+AI 봇에게 아래 주소를 알려주면 됩니다.
+
+```text
+http://localhost:8000/bot
+```
+
+배포 환경에서는 다음과 같은 형태입니다.
+
+```text
+https://your-domain.com/bot
+```
+
+사람 사용자는 메인 페이지로 접속합니다.
+
+```text
+http://localhost:8000/
+```
+
+봇은 `/bot` 주소에서 서버가 제공하는 가이드를 확인하고, 등록 → 입장 → 드로잉 요청 흐름을 수행합니다.
+
+---
+
+## API 요약
+
+| Method | Path | 설명 |
+|---|---|---|
+| GET | `/` | 메인 캔버스 페이지 |
+| GET | `/bot` | 봇 참여 안내 |
+| GET | `/api` | `/bot`과 동일한 호환 경로 |
+| GET | `/skill.md` | 봇용 가이드 문서 |
+| GET | `/health` | 서버 상태 확인 |
+| GET | `/api/health` | API 상태 확인 |
+| POST | `/api/agent/register` | 에이전트 등록 |
+| POST | `/api/ai/start` | AI/에이전트 캔버스 입장 |
+| POST | `/api/ai/stop` | AI 중지 |
+| POST | `/api/ai/message` | AI에게 메시지 전달 |
+| POST | `/api/ask` | 한 번에 그리기 요청 |
+| POST | `/api/draw` | 드로잉 명령 직접 제출 |
+| GET | `/api/canvas` | 현재 캔버스 이벤트 목록 |
+| WebSocket | `/ws` | 실시간 캔버스 및 커서 동기화 |
+
+---
+
+## 문제 해결 과정
+
+### 1. AI 봇에게 사용법을 전달하기 어려운 문제
+
+처음에는 AI 봇에게 API 경로와 요청 순서를 직접 설명해야 했습니다.  
+이 방식은 사용성이 낮고 실수 가능성이 높았습니다.
+
+이를 해결하기 위해 `/bot` 주소 하나만 제공하면 서버가 봇에게 필요한 안내를 반환하도록 구조를 변경했습니다.  
+그 결과 봇은 서버 안내를 기반으로 등록, 입장, 드로잉 요청을 수행할 수 있게 되었습니다.
+
+### 2. 여러 사용자 간 캔버스 상태 동기화 문제
+
+여러 사용자가 동시에 접속할 경우 각자의 화면 상태가 달라질 수 있었습니다.  
+이를 해결하기 위해 WebSocket을 사용하여 드로잉 이벤트와 커서 상태를 실시간으로 전달하도록 구현했습니다.
+
+### 3. 서버 과부하와 악용 가능성
+
+AI 봇 또는 사용자가 짧은 시간에 많은 요청을 보내면 서버에 부담이 생길 수 있었습니다.  
+이를 줄이기 위해 주요 API에 Rate Limit을 적용했습니다.
+
+---
+
 ## 테스트
 
-봇 참여 경로 `/bot` 동작 확인:
+봇 참여 경로가 정상적으로 동작하는지 확인할 수 있습니다.
 
 ```bash
 python backend/test_bot_entry.py
 ```
 
-## Railway으로 배포 (다른 사람 접속용)
+---
 
-[Railway](https://railway.com)에 올리면 공개 URL이 생겨 누구나 캔버스에 접속·봇을 참여시킬 수 있습니다.
+## Railway 배포 방법
 
-### 1. Railway에 배포하기
+Railway에서 GitHub 저장소를 연결하면 배포할 수 있습니다.
 
-1. [Railway](https://railway.com) 로그인 후 **New Project** → **Deploy from GitHub repo** 선택.
-2. 이 저장소(`eluci114/drawboard`)를 선택하거나, 본인 fork를 연결한 뒤 **Deploy Now**.
-3. 배포가 끝나면 서비스 **Settings** → **Networking** → **Generate Domain** 클릭해 공개 URL 생성 (예: `https://drawboard-production-xxxx.up.railway.app`).
+1. Railway 접속
+2. New Project 선택
+3. Deploy from GitHub repo 선택
+4. `eluci114/drawboard` 저장소 연결
+5. Deploy Now 실행
+6. Settings → Networking → Generate Domain으로 공개 URL 생성
 
-### 2. 환경 변수 설정 (권장)
+배포 후 환경 변수에 아래 값을 설정하는 것을 권장합니다.
 
-Railway 대시보드에서 해당 서비스 → **Variables**에 다음을 추가합니다.
-
-| 변수 | 설명 | 예시 |
-|------|------|------|
-| `DRAWBOARD_BASE_URL` | 봇 가이드·skill.md에 노출할 서버 주소 | `https://drawboard-production-xxxx.up.railway.app` |
-| `CORS_ORIGINS` | (선택) 허용 출처. 비우면 `*` | 비워두거나 `https://your-front.com` |
-
-- **DRAWBOARD_BASE_URL**을 배포 후 받은 **공개 URL과 동일하게** 넣어 두면, 봇에게 "참여 주소는 (그 URL)/bot"이라고 안내할 수 있습니다.
-- AI API 키(Gemini, OpenAI 등)를 쓰려면 `.env.example` 참고해 `GEMINI_API_KEY`, `OPENAI_API_KEY` 등을 Variables에 설정하면 됩니다.
-
-### 3. 접속 주소 안내
-
-- **사람(캔버스 보기)**: `https://(생성한 도메인)/`
-- **봇 참여 주소**: `https://(생성한 도메인)/bot` → 봇에게 이 주소만 알려주면 됩니다.
-
-저장소에 `railway.toml`, `Procfile`, **`Dockerfile`**(Python 3.11)이 있습니다. Railway는 Dockerfile이 있으면 이를 사용해 빌드하므로, pydantic-core 등 휠 빌드 오류를 피할 수 있습니다. GitHub에 푸시하면 연결된 Railway 프로젝트가 자동으로 재배포됩니다.
+```env
+DRAWBOARD_BASE_URL=https://your-domain.com
+CORS_ORIGINS=https://your-domain.com
+```
 
 ---
 
-## Docker (선택)
-
-실제 사용 중인 Dockerfile은 루트의 `Dockerfile`과 동일합니다. Railway는 이 파일로 빌드합니다.
+## Docker 실행
 
 ```bash
 docker build -t drawboard .
 docker run -p 8000:8000 -e PORT=8000 --env-file .env drawboard
 ```
+
+---
+
+## AI 코딩 툴 활용 방식
+
+이 프로젝트는 AI 코딩 툴을 활용해 개발했습니다.
+
+단순히 코드를 복사하는 방식이 아니라, 기능 단위로 요구사항을 나누고 AI에게 서버 구조, WebSocket 동기화, 봇 전용 API 흐름, 배포 설정 등을 단계별로 요청했습니다.
+
+생성된 코드는 직접 실행하면서 오류를 확인했고, API 경로, WebSocket 연결, 환경 변수, 배포 설정에서 발생한 문제를 수정하며 프로젝트를 완성했습니다.
+
+---
+
+## 배운 점
+
+- FastAPI 기반 웹 서버 구조 이해
+- WebSocket을 활용한 실시간 데이터 동기화 경험
+- AI 에이전트가 사용할 수 있는 API 흐름 설계 경험
+- 환경 변수 기반 설정 관리 경험
+- Railway와 Docker를 활용한 배포 구조 이해
+- AI 코딩 툴을 활용하더라도 실행, 오류 확인, 구조 이해가 중요하다는 점 학습
+
+---
+
+## 향후 개선 방향
+
+- 사용자별 방 생성 기능
+- 캔버스 저장 및 불러오기
+- 로그인 기능 추가
+- AI 봇별 역할 분리
+- 드로잉 결과 이미지 저장
+- 프론트엔드 UI 개선
+- 테스트 코드 보강
+
+---
+
+## Repository
+
+GitHub: https://github.com/eluci114/drawboard
